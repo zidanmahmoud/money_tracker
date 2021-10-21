@@ -7,6 +7,5 @@ This repo is to practice `sqlite3`, `pandas`, and CI/CD.
 
 TODO: Create a GUI to visualize the data.
 
----
 ## Requirements
     - Python 3.x.x

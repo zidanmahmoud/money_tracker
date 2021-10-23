@@ -5,6 +5,17 @@ import pandas as pd
 
 class MT:
     def __init__(self, path):
+        """
+        MT
+        ==
+
+        MT (Money Tracker) is an I/O class to the database of the app
+        money tracker. It uses the builtin python sqlite3 to initialize,
+        read, and modify a database file with two tables, namely, users
+        and transactions. The users table contains the user_id, username,
+        and password for each user. The transactions table contains the
+        user_id, amount, date, and category of each transaction.
+        """
         self._db = sqlite3.connect(path)
         self._cu = self._db.cursor()
 
@@ -13,6 +24,13 @@ class MT:
 
     def close(self):
         self._db.close()
+
+    def is_empty(self):
+        self._cu.execute("SELECT name FROM sqlite_master")
+        check = self._cu.fetchall()
+        if len(check) == 0:
+            return True
+        return False
 
     def initialize_empty_database(self):
         create_users_table = """

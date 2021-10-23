@@ -1,4 +1,3 @@
-from pathlib import Path
 import pytest
 import pandas as pd
 from utils import MT
@@ -7,7 +6,7 @@ from pandas.testing import assert_frame_equal
 @pytest.fixture
 def example_database():
     tracker = MT("example_test.db")
-    if not Path("example_test.db").is_file():
+    if tracker.is_empty():
         tracker.initialize_empty_database()
         tracker.add_user(1, "test", "1234")
         tracker.add_user(2, "test2", "1234")
@@ -15,10 +14,12 @@ def example_database():
         tracker.add_transaction_by_username("test", 50, "2020.12.31", "TEST")
         tracker.add_transaction_by_userid(2, 50, "2020.12.31", "TEST")
         tracker.add_transaction_by_username("test2", 50, "2020.12.31", "TEST")
-    return (
+    dataframes = [
         tracker.get_users_df(),
         tracker.get_transactions_df()
-    )
+    ]
+    tracker.close()
+    return dataframes
 
 def test_users(example_database):
     users_df = example_database[0]
@@ -29,6 +30,7 @@ def test_users(example_database):
     columns = ["user_id", "username", "password"]
     users_expected = pd.DataFrame(data, columns=columns)
     users_expected.set_index("user_id", inplace=True)
+    assert_frame_equal(users_expected, users_df)
 
 def test_transactions(example_database):
     transactions_df = example_database[1]

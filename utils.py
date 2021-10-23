@@ -6,9 +6,6 @@ import pandas as pd
 class MT:
     def __init__(self, path):
         """
-        MT
-        ==
-
         MT (Money Tracker) is an I/O class to the database of the app
         money tracker. It uses the builtin python sqlite3 to initialize,
         read, and modify a database file with two tables, namely, users

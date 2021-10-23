@@ -26,7 +26,7 @@ jobs:
       - name: Run tests and collect coverage
         run: |
           pip install pytest-cov
-          pytest --cov=./ --cov-report=xml tests/
+          pytest --cov-config=.coveragerc --cov=./ --cov-report=xml tests/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2

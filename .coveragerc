@@ -1,0 +1,5 @@
+[run]
+omit =
+  *__init__*
+  main.py
+  example.py

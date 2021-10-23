@@ -1,4 +1,4 @@
-from money_tracker import MT
+from utils import MT
 
 if __name__ == "__main__":
     tracker = MT("example_data.db")

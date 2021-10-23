@@ -7,12 +7,13 @@ class MT:
     def __init__(self, path):
         """
         MT (Money Tracker) is an I/O class to the database of the app
-        money tracker. It uses the builtin python sqlite3 to initialize,
+        money tracker.
+
+        MT uses the builtin python sqlite3 to initialize,
         read, and modify a database file with two tables, namely, users
         and transactions. The users table contains the user_id, username,
         and password for each user. The transactions table contains the
         user_id, amount, date, and category of each transaction.
-
         """
         self._db = sqlite3.connect(path)
         self._cu = self._db.cursor()

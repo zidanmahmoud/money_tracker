@@ -16,7 +16,7 @@ class MT:
         self._db = sqlite3.connect(path)
         self._cu = self._db.cursor()
 
-    def commit(self):
+    def _commit(self):
         self._db.commit()
 
     def close(self):
@@ -47,7 +47,7 @@ class MT:
         """
         self._cu.execute(create_users_table)
         self._cu.execute(create_transactions_table)
-        self.commit()
+        self._commit()
 
     def get_userid_from_username(self, username):
         usernames = self._get_available_usernames()
@@ -103,7 +103,7 @@ class MT:
             INSERT INTO users VALUES({user_id}, '{username}', '{passwd}')
         """
         self._cu.execute(add_usr_qr)
-        self.commit()
+        self._commit()
 
     def add_transaction_by_userid(self, user_id, amount, date, category):
         ids = self._get_available_ids()
@@ -117,7 +117,7 @@ class MT:
             )
         """
         self._cu.execute(add_trns_qr)
-        self.commit()
+        self._commit()
 
     def add_transaction_by_username(self, username, amount, date, category):
         usernames = self._get_available_usernames()
@@ -135,11 +135,11 @@ class MT:
             )
         """
         self._cu.execute(add_trns_qr)
-        self.commit()
+        self._commit()
 
     def remove_transaction_by_rowid(self, row_id):
         self._cu.execute(f"DELETE FROM transactions WHERE rowid={row_id}")
-        self.commit()
+        self._commit()
 
     def remove_user_by_userid(self, user_id):
         if user_id not in self._get_available_ids():
@@ -148,4 +148,4 @@ class MT:
             )
         self._cu.execute(f"DELETE FROM users WHERE user_id={user_id}")
         self._cu.execute(f"DELETE FROM transactions WHERE user_id={user_id}")
-        self.commit()
+        self._commit()

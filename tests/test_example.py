@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from money_tracker.utils import MT
+from utils import MT
 from pandas.testing import assert_frame_equal
 
 @pytest.fixture

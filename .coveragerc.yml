@@ -1,0 +1,6 @@
+[run]
+  # source=your_package_name #for later when we package
+  omit =
+    *__init__*
+    main.py
+    example.py

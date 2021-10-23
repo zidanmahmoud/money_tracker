@@ -12,6 +12,7 @@ class MT:
         and transactions. The users table contains the user_id, username,
         and password for each user. The transactions table contains the
         user_id, amount, date, and category of each transaction.
+
         """
         self._db = sqlite3.connect(path)
         self._cu = self._db.cursor()

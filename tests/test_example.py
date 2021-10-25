@@ -12,8 +12,8 @@ def tracker():
     tracker.open_db("example_test.db")
     if tracker.is_empty():
         tracker.initialize_database()
-        tracker.add_user(1, "test", "1234")
-        tracker.add_user(2, "test2", "1234")
+        tracker.add_user(1, "test")
+        tracker.add_user(2, "test2")
         tracker.add_transaction_by_userid(
             1, 50, date(2020, 12, 31), "TEST"
         )
@@ -31,10 +31,10 @@ def tracker():
 
 def default_users_data():
     data = [
-        [1, "test", "1234"],
-        [2, "test2", "1234"],
+        [1, "test"],
+        [2, "test2"],
     ]
-    columns = ["user_id", "username", "password"]
+    columns = ["user_id", "username"]
     return (data, columns)
 
 def default_trans_data():
@@ -87,11 +87,11 @@ def test_userid_from_username(tracker):
     assert actual == expected
 
 def test_add_user(tracker):
-    tracker.add_user(3, "hi", "hi")
+    tracker.add_user(3, "hi")
     users_df = tracker.get_users_df()
     tracker.remove_user_by_userid(3)
     data, columns = default_users_data()
-    data.append([3, "hi", "hi"])
+    data.append([3, "hi"])
     users_expected = pd.DataFrame(data, columns=columns)
     users_expected.set_index("user_id", inplace=True)
     assert_frame_equal(users_expected, users_df)

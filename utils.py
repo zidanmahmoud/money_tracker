@@ -11,8 +11,8 @@ class MT:
 
         MT uses the builtin python sqlite3 to initialize,
         read, and modify a database file with two tables, namely, users
-        and transactions. The users table contains the user_id, username,
-        and password for each user. The transactions table contains the
+        and transactions. The users table contains the user_id and
+        username for each user. The transactions table contains the
         user_id, amount, date, and category of each transaction.
         """
         self._db = None
@@ -28,8 +28,7 @@ class MT:
         create_users_table = """
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
-                username TEXT,
-                password TEXT
+                username TEXT
             )
         """
         create_transactions_table = """
@@ -67,7 +66,8 @@ class MT:
 
     def get_users_df(self):
         return pd.read_sql_query(
-            "SELECT * FROM users", self._db, index_col="user_id"
+            "SELECT * FROM users",
+            self._db, index_col="user_id"
         )
 
     def get_users_df_custom(self, custom_query):
@@ -86,7 +86,7 @@ class MT:
         df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
         return df
 
-    def add_user(self, user_id, username, passwd):
+    def add_user(self, user_id, username):
         ids = self._get_available_ids()
         usernames = self._get_available_usernames()
         if user_id in ids:
@@ -100,7 +100,7 @@ class MT:
                 Please select another username
             """)
         add_usr_qr = f"""
-            INSERT INTO users VALUES({user_id}, '{username}', '{passwd}')
+            INSERT INTO users VALUES({user_id}, '{username}')
         """
         self._cu.execute(add_usr_qr)
         self._commit()

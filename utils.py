@@ -4,7 +4,7 @@ import pandas as pd
 
 
 class MT:
-    def __init__(self, path):
+    def __init__(self):
         """
         MT (Money Tracker) is an I/O class to the database of the app
         money tracker.
@@ -15,23 +15,16 @@ class MT:
         and password for each user. The transactions table contains the
         user_id, amount, date, and category of each transaction.
         """
+        self._db = None
+        self._cu = None
+
+    #== Public functions
+
+    def open_db(self, path):
         self._db = sqlite3.connect(path)
         self._cu = self._db.cursor()
 
-    def _commit(self):
-        self._db.commit()
-
-    def close(self):
-        self._db.close()
-
-    def is_empty(self):
-        self._cu.execute("SELECT name FROM sqlite_master")
-        check = self._cu.fetchall()
-        if len(check) == 0:
-            return True
-        return False
-
-    def initialize_empty_database(self):
+    def initialize_database(self):
         create_users_table = """
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
@@ -50,6 +43,16 @@ class MT:
         self._cu.execute(create_users_table)
         self._cu.execute(create_transactions_table)
         self._commit()
+
+    def close(self):
+        self._db.close()
+
+    def is_empty(self):
+        self._cu.execute("SELECT name FROM sqlite_master")
+        check = self._cu.fetchall()
+        if len(check) == 0:
+            return True
+        return False
 
     def get_userid_from_username(self, username):
         usernames = self._get_available_usernames()
@@ -71,22 +74,17 @@ class MT:
         return pd.read_sql_query(custom_query, self._db, index_col="user_id")
 
     def get_transactions_df(self):
-        return pd.read_sql_query(
-            "SELECT rowid, * FROM transactions", self._db, index_col="rowid"
+        df = pd.read_sql_query(
+            "SELECT rowid, * FROM transactions",
+            self._db, index_col="rowid",
         )
+        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+        return df
 
     def get_transactions_df_custom(self, custom_query):
-        return pd.read_sql_query(custom_query, self._db, index_col="rowid")
-
-    def _get_available_ids(self):
-        return pd.read_sql_query(
-            "SELECT user_id FROM users", self._db
-        ).values.flatten()
-
-    def _get_available_usernames(self):
-        return pd.read_sql_query(
-            "SELECT username FROM users", self._db
-        ).values.flatten()
+        df = pd.read_sql_query(custom_query, self._db, index_col="rowid")
+        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+        return df
 
     def add_user(self, user_id, username, passwd):
         ids = self._get_available_ids()
@@ -151,3 +149,18 @@ class MT:
         self._cu.execute(f"DELETE FROM users WHERE user_id={user_id}")
         self._cu.execute(f"DELETE FROM transactions WHERE user_id={user_id}")
         self._commit()
+
+    #== Private functions
+
+    def _commit(self):
+        self._db.commit()
+
+    def _get_available_ids(self):
+        return pd.read_sql_query(
+            "SELECT user_id FROM users", self._db
+        ).values.flatten()
+
+    def _get_available_usernames(self):
+        return pd.read_sql_query(
+            "SELECT username FROM users", self._db
+        ).values.flatten()

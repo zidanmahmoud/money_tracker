@@ -105,47 +105,29 @@ class MT:
         self._cu.execute(add_usr_qr)
         self._commit()
 
-    def add_transaction_by_userid(self, user_id, amount, date, category):
-        ids = self._get_available_ids()
-        if user_id not in ids:
-            raise ValueError(
-                f"Transaction cannot be added! No user id: {user_id}"
-            )
-        add_trns_qr = f"""
-            INSERT INTO transactions VALUES(
-                {user_id}, {amount}, '{date}', '{category}'
-            )
-        """
-        self._cu.execute(add_trns_qr)
-        self._commit()
-
-    def add_transaction_by_username(self, username, amount, date, category):
+    def add_income(self, username, amount, date, category):
         usernames = self._get_available_usernames()
         if username not in usernames:
             raise ValueError(
                 f"Transaction cannot be added! No username: {username}"
             )
-        get_id_qr = f"""
-            SELECT user_id, username FROM users WHERE username='{username}'
-        """
-        user_id = pd.read_sql_query(get_id_qr, self._db).iloc[0, 0]
-        add_trns_qr = f"""
-            INSERT INTO transactions VALUES(
-                {user_id}, {amount}, '{date}', '{category}'
-            )
-        """
-        self._cu.execute(add_trns_qr)
-        self._commit()
+        user_id = self.get_userid_from_username(username)
+        self._add_transaction_by_userid(user_id, amount, date, category)
+
+    def add_expense(self, username, amount, date, category):
+        self.add_income(username, -1 * amount, date, category)
 
     def remove_transaction_by_rowid(self, row_id):
         self._cu.execute(f"DELETE FROM transactions WHERE rowid={row_id}")
         self._commit()
 
-    def remove_user_by_userid(self, user_id):
-        if user_id not in self._get_available_ids():
+    def remove_user(self, username):
+        usernames = self._get_available_usernames()
+        if username not in usernames:
             warnings.warn(
-                f"user_id {user_id} not found ... did not remove any users"
+                f"username {username} not found ... did not remove any users"
             )
+        user_id = self.get_userid_from_username(username)
         self._cu.execute(f"DELETE FROM users WHERE user_id={user_id}")
         self._cu.execute(f"DELETE FROM transactions WHERE user_id={user_id}")
         self._commit()
@@ -164,3 +146,17 @@ class MT:
         return pd.read_sql_query(
             "SELECT username FROM users", self._db
         ).values.flatten()
+
+    def _add_transaction_by_userid(self, user_id, amount, date, category):
+        ids = self._get_available_ids()
+        if user_id not in ids:
+            raise ValueError(
+                f"Transaction cannot be added! No user id: {user_id}"
+            )
+        add_trns_qr = f"""
+            INSERT INTO transactions VALUES(
+                {user_id}, {amount}, '{date}', '{category}'
+            )
+        """
+        self._cu.execute(add_trns_qr)
+        self._commit()

@@ -82,8 +82,7 @@ class MT:
         return df
 
     def get_transactions_df_custom(self, custom_query):
-        df = pd.read_sql_query(custom_query, self._db, index_col="rowid")
-        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+        df = pd.read_sql_query(custom_query, self._db)
         return df
 
     def add_user(self, user_id, username):

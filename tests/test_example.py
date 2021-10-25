@@ -75,7 +75,8 @@ def test_transactions_custom_query(tracker):
     transactions_df = tracker.get_transactions_df_custom("""
         SELECT rowid, * FROM transactions
         WHERE user_id = 1
-    """)
+    """).set_index("rowid")
+    transactions_df["date"] = pd.to_datetime(transactions_df["date"], format="%Y-%m-%d")
     data, columns = default_trans_data()
     transactions_expected = pd.DataFrame(data[:2], columns=columns)
     transactions_expected.set_index("rowid", inplace=True)

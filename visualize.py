@@ -58,11 +58,13 @@ def plot_expenses_by_category(db, piechart=True, barchart=False):
         ORDER BY amount DESC
     """
     df = db.get_transactions_df_custom(expenses_by_category_qr).set_index("Category")
-    fig = plt.figure("Expenses By Category - Bar Chart")
-    ax = fig.subplots(1, 1)
     if piechart and not barchart:
+        fig = plt.figure("Expenses By Category - Pie Chart")
+        ax = fig.subplots(1, 1)
         df.plot(kind="pie", subplots=True, ax=ax)
     elif not piechart and barchart:
+        fig = plt.figure("Expenses By Category - Bar Chart")
+        ax = fig.subplots(1, 1)
         df.plot(kind="barh", ax=ax)
         ax.set_xlabel("Amount")
         ax.invert_yaxis()
@@ -72,7 +74,6 @@ def plot_expenses_by_category(db, piechart=True, barchart=False):
     else:
         raise RuntimeError
     fig.tight_layout()
-    fig = plt.figure("Expenses By Category - Pie Chart")
     return fig, ax
 
 def plot_monthly_moneyflow(db, year):

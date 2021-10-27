@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 from datetime import date
+from scipy.interpolate import interp1d
 from utils import MT
 
 if __name__ == "__main__":
@@ -8,8 +10,16 @@ if __name__ == "__main__":
     db.open_db("DATA.db")
     if db.is_empty():
         db.initialize_database()
+
         db.add_user(1, "sameer")
-        # db.add_income("sameer", 2400, date(2021, 10, 1), "Salary")
+
+        db.add_income("sameer", 2400, date(2021, 9, 1), "Salary")
+        db.add_expense("sameer", 1000, date(2021, 9, 5), "Rent")
+        db.add_expense("sameer", 50, date(2021, 9, 5), "Insurance")
+        db.add_expense("sameer", 15, date(2021, 9, 8), "Gym")
+        db.add_expense("sameer", 60, date(2021, 9, 14), "Entertainment")
+        db.add_expense("sameer", 20, date(2021, 9, 27), "Groceries")
+
         db.add_expense("sameer", 1000, date(2021, 10, 5), "Rent")
         db.add_expense("sameer", 50, date(2021, 10, 5), "Insurance")
         db.add_expense("sameer", 20, date(2021, 10, 5), "Groceries")
@@ -17,6 +27,7 @@ if __name__ == "__main__":
         db.add_expense("sameer", 20, date(2021, 10, 14), "Groceries")
         db.add_expense("sameer", 60, date(2021, 10, 14), "Entertainment")
         db.add_expense("sameer", 20, date(2021, 10, 27), "Groceries")
+        db.add_expense("sameer", 500, date(2021, 10, 15), "Car")
 
         db.add_income("sameer", 2400, date(2021, 11, 1), "Salary")
         db.add_expense("sameer", 1000, date(2021, 11, 5), "Rent")
@@ -25,6 +36,14 @@ if __name__ == "__main__":
         db.add_expense("sameer", 15, date(2021, 11, 8), "Gym")
         db.add_expense("sameer", 100, date(2021, 11, 14), "Travel")
         db.add_expense("sameer", 20, date(2021, 11, 27), "Groceries")
+
+        db.add_income("sameer", 2400, date(2021, 12, 1), "Salary")
+        db.add_expense("sameer", 1000, date(2021, 12, 5), "Rent")
+        db.add_expense("sameer", 200, date(2021, 12, 5), "Insurance")
+        db.add_expense("sameer", 100, date(2021, 12, 7), "Groceries")
+        db.add_expense("sameer", 15, date(2021, 12, 8), "Gym")
+        db.add_expense("sameer", 400, date(2021, 12, 15), "Car")
+        db.add_expense("sameer", 70, date(2021, 12, 27), "Groceries")
     print(db.get_transactions_df())
 
     expenses_by_category_qr = """
@@ -98,7 +117,52 @@ if __name__ == "__main__":
     ax.grid(True)
     fig.tight_layout()
 
-    # TODO: Calculate net worth and plot it
+
+    networth_qr = """
+        WITH monthly AS
+        (
+            SELECT strftime("%m", date) AS Month,
+            SUM(amount) AS flow
+            FROM transactions
+            GROUP BY Month
+        )
+        SELECT
+            t1.Month,
+            (SELECT SUM(t2.flow) FROM monthly AS t2 WHERE t2.Month <= t1.Month) AS Flow
+        FROM monthly AS t1
+        ORDER BY t1.Month
+    """
+    df = db.get_transactions_df_custom(
+        networth_qr
+    ).set_index("Month")
+    print(df)
+
+    fig = plt.figure("Yearly Networth")
+    ax = fig.subplots(1, 1)
+
+    x_axis = np.array(df.index.array, dtype=int)
+    y_val = np.array(df.Flow)
+    ax.plot(x_axis, y_val, "o", color="#1f77b4")
+
+    cubic_interp = interp1d(x_axis, y_val, kind="quadratic")
+    xnew = np.linspace(x_axis[0], x_axis[-1], 200)
+    ynew = cubic_interp(xnew)
+
+    pos = ynew.copy()
+    neg = ynew.copy()
+    pos[pos < 0] = np.nan
+    neg[neg > 0] = np.nan
+
+    ax.plot(xnew, pos, "--", color="#2ca02c")
+    ax.plot(xnew, neg, "--", color="#ff7f0e")
+    ax.fill_between(xnew, pos, color="#2ca02c", alpha=0.5)
+    ax.fill_between(xnew, neg, color="#ff7f0e", alpha=0.5)
+
+    ax.set_xticks(x_axis)
+    ax.set_xlabel("Month")
+    ax.set_ylabel("Net Worth")
+    ax.grid(True)
+    fig.tight_layout()
 
     plt.show()
 

@@ -5,9 +5,9 @@ from datetime import date
 from scipy.interpolate import interp1d
 from utils import MT
 
-if __name__ == "__main__":
+def get_db(path):
     db = MT()
-    db.open_db("DATA.db")
+    db.open_db(path)
     if db.is_empty():
         db.initialize_database()
 
@@ -44,8 +44,10 @@ if __name__ == "__main__":
         db.add_expense("sameer", 15, date(2021, 12, 8), "Gym")
         db.add_expense("sameer", 400, date(2021, 12, 15), "Car")
         db.add_expense("sameer", 70, date(2021, 12, 27), "Groceries")
-    print(db.get_transactions_df())
 
+    return db
+
+def plot_expenses_by_category(db, piechart=True, barchart=False):
     expenses_by_category_qr = """
         SELECT
             category AS Category,
@@ -58,19 +60,22 @@ if __name__ == "__main__":
     df = db.get_transactions_df_custom(expenses_by_category_qr).set_index("Category")
     fig = plt.figure("Expenses By Category - Bar Chart")
     ax = fig.subplots(1, 1)
-    df.plot(kind="barh", ax=ax)
-    ax.set_xlabel("Amount")
-    ax.invert_yaxis()
-    ax.get_legend().remove()
-    ax.set_axisbelow(True)
-    ax.grid(True)
+    if piechart and not barchart:
+        df.plot(kind="pie", subplots=True, ax=ax)
+    elif not piechart and barchart:
+        df.plot(kind="barh", ax=ax)
+        ax.set_xlabel("Amount")
+        ax.invert_yaxis()
+        ax.get_legend().remove()
+        ax.set_axisbelow(True)
+        ax.grid(True)
+    else:
+        raise RuntimeError
     fig.tight_layout()
     fig = plt.figure("Expenses By Category - Pie Chart")
+    return fig, ax
 
-    ax = fig.subplots(1, 1)
-    df.plot(kind="pie", subplots=True, ax=ax)
-    fig.tight_layout()
-
+def plot_monthly_moneyflow(db, year):
     # sqlite does not support full join yet,
     # so it is emulated by left join and union
     # https://stackoverflow.com/questions/1923259/full-outer-join-with-sqlite
@@ -116,8 +121,9 @@ if __name__ == "__main__":
     ax.set_axisbelow(True)
     ax.grid(True)
     fig.tight_layout()
+    return fig, ax
 
-
+def plot_nerworth(db, year):
     networth_qr = """
         WITH monthly AS
         (
@@ -135,7 +141,6 @@ if __name__ == "__main__":
     df = db.get_transactions_df_custom(
         networth_qr
     ).set_index("Month")
-    print(df)
 
     fig = plt.figure("Yearly Networth")
     ax = fig.subplots(1, 1)
@@ -144,9 +149,9 @@ if __name__ == "__main__":
     y_val = np.array(df.Flow)
     ax.plot(x_axis, y_val, "o", color="#1f77b4")
 
-    cubic_interp = interp1d(x_axis, y_val, kind="quadratic")
+    quad_interp = interp1d(x_axis, y_val, kind="quadratic")
     xnew = np.linspace(x_axis[0], x_axis[-1], 200)
-    ynew = cubic_interp(xnew)
+    ynew = quad_interp(xnew)
 
     pos = ynew.copy()
     neg = ynew.copy()
@@ -164,5 +169,13 @@ if __name__ == "__main__":
     ax.grid(True)
     fig.tight_layout()
 
+
+if __name__ == "__main__":
+    db = get_db("DATA.db")
+    print(db.get_transactions_df())
+    plot_expenses_by_category(db)
+    year = 2021
+    plot_monthly_moneyflow(db, year)
+    plot_nerworth(db, year)
     plt.show()
 

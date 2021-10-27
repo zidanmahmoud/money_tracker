@@ -3,3 +3,4 @@ omit =
   *__init__*
   main.py
   example.py
+  visualize.py

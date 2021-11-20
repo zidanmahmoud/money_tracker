@@ -52,5 +52,5 @@ An example with the following dataset,
 
 would give the following plots:
 
-<img src="./readme_images/piechart.png" width="300"> <img src="./readme_images/barchart.png" width="300">
-<img src="./readme_images/moneyflow.png" width="300"> <img src="./readme_images/networth.png" width="300">
+<img src="./readme_images/piechart.png" width="320">  <img src="./readme_images/barchart.png" width="320">
+<img src="./readme_images/moneyflow.png" width="320"> <img src="./readme_images/networth.png" width="320">

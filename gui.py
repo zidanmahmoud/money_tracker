@@ -107,14 +107,14 @@ class Ui_MainWindow:
         icon3.addPixmap(QtGui.QPixmap("gui_assets/light_mode.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionLight_Mode.setIcon(icon3)
         self.actionLight_Mode.setObjectName("actionLight_Mode")
-        self.actionLight_Mode.triggered.connect(self.make_light_mode)
+        self.actionLight_Mode.triggered.connect(light_mode)
 
         self.actionDark_Mode = QtWidgets.QAction(MainWindow)
         icon4 = QtGui.QIcon()
         icon4.addPixmap(QtGui.QPixmap("gui_assets/dark_mode.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionDark_Mode.setIcon(icon4)
         self.actionDark_Mode.setObjectName("actionDark_Mode")
-        self.actionDark_Mode.triggered.connect(self.make_dark_mode)
+        self.actionDark_Mode.triggered.connect(dark_mode)
 
         self.actionAbout = QtWidgets.QAction(MainWindow)
         icon2 = QtGui.QIcon()
@@ -185,18 +185,6 @@ class Ui_MainWindow:
             self.labelPath.setStyleSheet("color: rgb(31, 119, 180);")
             self.tabWidget.setTabEnabled(1, True)
 
-    def make_light_mode(self):
-        global app
-        with open("./gui_assets/Breeze/light/stylesheet.qss", "r") as f:
-            stylesheet = f.read()
-            app.setStyleSheet(stylesheet)
-
-    def make_dark_mode(self):
-        global app
-        with open("./gui_assets/Breeze/dark/stylesheet.qss", "r") as f:
-            stylesheet = f.read()
-            app.setStyleSheet(stylesheet)
-
     def closeEvent(self, event):
         self.terminate_connection()
         print("Closing")
@@ -215,17 +203,30 @@ class MainWindowCustom(QtWidgets.QMainWindow):
             event.ignore()
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-
-    # Dark mode by default
+def dark_mode():
+    global APP
     with open("./gui_assets/Breeze/dark/stylesheet.qss", "r") as f:
         stylesheet = f.read()
-        app.setStyleSheet(stylesheet)
+        APP.setStyleSheet(stylesheet)
 
+def light_mode():
+    global APP
+    with open("./gui_assets/Breeze/light/stylesheet.qss", "r") as f:
+        stylesheet = f.read()
+        APP.setStyleSheet(stylesheet)
+
+if __name__ == "__main__":
+    import sys
+    APP = QtWidgets.QApplication(sys.argv)
     MainWindow = MainWindowCustom()
+
+    from detect_system_theme import detect
+    if detect() ==  "Dark":
+        dark_mode()
+    else:
+        light_mode()
+
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    sys.exit(app.exec_())
+    sys.exit(APP.exec_())

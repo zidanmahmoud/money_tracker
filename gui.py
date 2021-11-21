@@ -137,7 +137,7 @@ class Ui_MainWindow:
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Money Tracker v0.1"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Money Tracker v1.0"))
         self.ButtonNew.setText(_translate("MainWindow", "Start a new account"))
         self.labelPath.setText(_translate("MainWindow", "None"))
         self.labelConnected.setText(_translate("MainWindow", "Current Connected Account:"))

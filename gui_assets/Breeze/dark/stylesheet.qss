@@ -1139,6 +1139,11 @@ QTabBar::tab:top:!selected:first:hover
     border-bottom-right-radius: 0em;
 }
 
+QTabBar::tab:top:!enabled
+{
+    color: #808080
+}
+
 /* BOTTOM TABS */
 QTabBar::tab:bottom,
 QTabBar::tab:bottom:last,

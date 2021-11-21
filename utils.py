@@ -46,13 +46,13 @@ class MT:
             "SELECT rowid, * FROM transactions",
             self._db, index_col="rowid",
         )
-        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+        df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d").dt.date
         return df
 
     def get_transactions_df_custom(self, custom_query):
         df = pd.read_sql_query(custom_query, self._db)
         if "date" in df.columns:
-            df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+            df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d").dt.date
         return df
 
     def add_income(self, date, amount, category):

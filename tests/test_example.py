@@ -21,10 +21,10 @@ def tracker():
 
 def default_trans_data():
     data = [
-        [1, datetime(2020, 12, 31), 50.0, "TEST"],
-        [2, datetime(2020, 12, 31),-50.0, "TEST"],
-        [3, datetime(2020, 12, 31), 50.0, "TEST"],
-        [4, datetime(2020, 12, 31),-50.0, "TEST"],
+        [1, date(2020, 12, 31), 50.0, "TEST"],
+        [2, date(2020, 12, 31),-50.0, "TEST"],
+        [3, date(2020, 12, 31), 50.0, "TEST"],
+        [4, date(2020, 12, 31),-50.0, "TEST"],
     ]
     columns = ["rowid", "date", "amount", "category"]
     return (data, columns)
@@ -51,7 +51,7 @@ def test_add_expense(tracker):
     transactions_df = tracker.get_transactions_df()
     tracker.remove_transaction_by_rowid(5)
     data, columns = default_trans_data()
-    data.append([5, datetime(2021, 10, 10), -70.0, "hi"])
+    data.append([5, date(2021, 10, 10), -70.0, "hi"])
     transactions_expected = pd.DataFrame(data, columns=columns)
     transactions_expected.set_index("rowid", inplace=True)
     assert_frame_equal(transactions_expected, transactions_df)

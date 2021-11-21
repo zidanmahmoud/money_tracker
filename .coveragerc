@@ -5,3 +5,4 @@ omit =
   example.py
   visualize.py
   gui.py
+  detect_system_theme.py

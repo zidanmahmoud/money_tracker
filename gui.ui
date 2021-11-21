@@ -33,7 +33,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabAccount">
        <attribute name="title">
@@ -111,10 +111,15 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="tabData">
        <attribute name="title">
-        <string>Tab 2</string>
+        <string>Data</string>
        </attribute>
+       <layout class="QGridLayout" name="layoutData">
+        <item row="0" column="0">
+         <widget class="QTableView" name="tableView"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>

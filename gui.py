@@ -1,6 +1,29 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from utils import MT
 
+class PandasModel(QtCore.QAbstractTableModel):
+    def __init__(self, data, parent=None):
+        QtCore.QAbstractTableModel.__init__(self, parent)
+        self._data = data
+
+    def rowCount(self, parent=None):
+        return len(self._data.values)
+
+    def columnCount(self, parent=None):
+        return self._data.columns.size
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if index.isValid():
+            if role == QtCore.Qt.DisplayRole:
+                return QtCore.QVariant(str(
+                    self._data.iloc[index.row()][index.column()]))
+        return QtCore.QVariant()
+
+    def headerData(self, col, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self._data.columns[col]
+        return None
+
 
 class Ui_MainWindow:
     def setupUi(self, MainWindow):
@@ -72,9 +95,25 @@ class Ui_MainWindow:
 
         self.tabWidget.addTab(self.tabAccount, "")
 
-        self.tab_2 = QtWidgets.QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.tabWidget.addTab(self.tab_2, "")
+        self.tabData = QtWidgets.QWidget()
+        self.tabData.setObjectName("tabData")
+
+        self.layoutData = QtWidgets.QGridLayout(self.tabData)
+        self.layoutData.setObjectName("layoutData")
+
+        self.tableView = QtWidgets.QTableView(self.tabData)
+        self.tableView.setObjectName("tableView")
+        self.tableView.setFont(font)
+        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.tableView.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        # header = self.tableView.horizontalHeader()
+        # header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        # header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        # header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+
+        self.layoutData.addWidget(self.tableView, 0, 0, 1, 1)
+
+        self.tabWidget.addTab(self.tabData, "")
         self.tabWidget.setTabEnabled(1, False)
 
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -144,7 +183,7 @@ class Ui_MainWindow:
         self.ButtonOpen.setText(_translate("MainWindow", "Connect an existing account"))
         self.ButtonTerminate.setText(_translate("MainWindow", "Terminate the connection"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabAccount), _translate("MainWindow", "Account"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Tab 2"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabData), _translate("MainWindow", "Data"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuView.setTitle(_translate("MainWindow", "View"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
@@ -176,14 +215,23 @@ class Ui_MainWindow:
 
     def update_account(self):
         if self.db_path is None:
+            self.db_conn = None
             self.labelPath.setText("None")
             self.labelPath.setStyleSheet("color: rgb(214, 39, 40);")
             self.tabWidget.setTabEnabled(1, False)
         else:
-            self.db_conn = None
             self.labelPath.setText(self.db_path)
             self.labelPath.setStyleSheet("color: rgb(31, 119, 180);")
             self.tabWidget.setTabEnabled(1, True)
+            self.populate_data_table()
+
+    def populate_data_table(self):
+        df = self.MT.get_transactions_df_custom("""
+            SELECT rowid, * FROM transactions
+            ORDER BY date DESC
+        """)
+        model = PandasModel(df)
+        self.tableView.setModel(model)
 
     def closeEvent(self, event):
         self.terminate_connection()

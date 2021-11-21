@@ -4,3 +4,4 @@ omit =
   main.py
   example.py
   visualize.py
+  gui.py

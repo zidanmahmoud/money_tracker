@@ -5,6 +5,11 @@ from datetime import date
 from scipy.interpolate import interp1d
 from utils import MT
 
+# # Dark mode but default color cycle (dark mode color cycle is terrible)
+# default_colors = plt.rcParams['axes.prop_cycle']
+# plt.style.use("dark_background")
+# plt.rcParams['axes.prop_cycle'] = default_colors
+
 def get_db(path):
     db = MT()
     db.open_db(path)
@@ -45,7 +50,7 @@ def get_db(path):
 
     return db
 
-def plot_expenses_by_category(db, piechart=True, barchart=False):
+def plot_expenses_by_category(ax, db, piechart=True):
     expenses_by_category_qr = """
         SELECT
             category AS Category,
@@ -56,29 +61,22 @@ def plot_expenses_by_category(db, piechart=True, barchart=False):
         ORDER BY amount DESC
     """
     df = db.get_transactions_df_custom(expenses_by_category_qr).set_index("Category")
-    if piechart and not barchart:
-        fig = plt.figure("Expenses By Category - Pie Chart")
-        ax = fig.subplots(1, 1)
+    ax.set_title("Expenses By Category")
+    if piechart is True:
         df.plot(kind="pie", subplots=True, ax=ax)
-    elif not piechart and barchart:
-        fig = plt.figure("Expenses By Category - Bar Chart")
-        ax = fig.subplots(1, 1)
+    else:
         df.plot(kind="barh", ax=ax)
         ax.set_xlabel("Amount")
         ax.invert_yaxis()
         ax.get_legend().remove()
         ax.set_axisbelow(True)
         ax.grid(True)
-    else:
-        raise RuntimeError
-    fig.tight_layout()
     return fig, ax
 
-def plot_monthly_moneyflow(db, year):
+def plot_monthly_moneyflow(ax, db, year):
     # sqlite does not support full join yet,
     # so it is emulated by left join and union
     # https://stackoverflow.com/questions/1923259/full-outer-join-with-sqlite
-    year = 2021
     moneyflow_qr = f"""
         WITH INCOME AS
         (
@@ -113,22 +111,23 @@ def plot_monthly_moneyflow(db, year):
     df = db.get_transactions_df_custom(
         moneyflow_qr
     ).set_index("Month")
-    fig = plt.figure("Moneyflow Per Month")
-    ax = fig.subplots(1, 1)
     df.plot(kind="bar", ax=ax)
+    ax.set_title("Moneyflow Per Month")
     ax.set_ylabel("Amount")
     ax.set_axisbelow(True)
     ax.grid(True)
-    fig.tight_layout()
+    # fig.tight_layout()
     return fig, ax
 
-def plot_nerworth(db, year):
-    networth_qr = """
+def plot_nerworth(ax, db, year):
+    networth_qr = f"""
         WITH monthly AS
         (
-            SELECT strftime("%m", date) AS Month,
-            SUM(amount) AS flow
+            SELECT
+                strftime("%m", date) AS Month,
+                SUM(amount) AS flow
             FROM transactions
+            WHERE strftime("%Y", date) = "{year}"
             GROUP BY Month
         )
         SELECT
@@ -141,8 +140,6 @@ def plot_nerworth(db, year):
         networth_qr
     ).set_index("Month")
 
-    fig = plt.figure("Yearly Networth")
-    ax = fig.subplots(1, 1)
 
     x_axis = np.array(df.index.array, dtype=int)
     y_val = np.array(df.Flow)
@@ -162,19 +159,28 @@ def plot_nerworth(db, year):
     ax.fill_between(xnew, pos, color="#2ca02c", alpha=0.5)
     ax.fill_between(xnew, neg, color="#ff7f0e", alpha=0.5)
 
+    ax.set_title("Yearly Networth")
     ax.set_xticks(x_axis)
     ax.set_xlabel("Month")
     ax.set_ylabel("Net Worth")
     ax.grid(True)
-    fig.tight_layout()
 
 
 if __name__ == "__main__":
     db = get_db("DATA.db")
-    print(db.get_transactions_df())
-    plot_expenses_by_category(db, False, True)
+
+    fig = plt.figure("Expenses By Category")
+    ax = fig.subplots(1, 1)
+    plot_expenses_by_category(ax, db, True)
+
     year = 2021
-    plot_monthly_moneyflow(db, year)
-    plot_nerworth(db, year)
+
+    fig = plt.figure("Moneyflow Per Month")
+    ax = fig.subplots(1, 1)
+    plot_monthly_moneyflow(ax, db, year)
+
+    fig = plt.figure("Yearly Networth")
+    ax = fig.subplots(1, 1)
+    plot_nerworth(ax, db, year)
     plt.show()
 

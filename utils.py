@@ -65,6 +65,12 @@ class MT:
         self._cu.execute(f"DELETE FROM transactions WHERE rowid={row_id}")
         self._commit()
 
+    def get_years(self):
+        return pd.read_sql_query(
+            "SELECT DISTINCT strftime('%Y', date) AS year FROM transactions",
+            self._db
+        ).values.flatten()
+
     #== Private functions
 
     def _commit(self):

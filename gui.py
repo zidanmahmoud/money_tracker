@@ -1,5 +1,23 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+import matplotlib
+matplotlib.use('Qt5Agg')
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+
+from detect_system_theme import detect
 from utils import MT
+from visualize import (
+    plot_nerworth,
+    plot_monthly_moneyflow,
+    plot_expenses_by_category
+)
+
+class MplCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
 
 class PandasModel(QtCore.QAbstractTableModel):
     def __init__(self, data, parent=None):
@@ -33,8 +51,13 @@ class Ui_MainWindow:
         self.db_path = None
         self.MainWindow = MainWindow
 
+        if detect() ==  "Dark":
+            self.dark_mode()
+        else:
+            self.light_mode()
+
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(600, 600)
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("gui_assets/main_icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -97,24 +120,50 @@ class Ui_MainWindow:
 
         self.tabData = QtWidgets.QWidget()
         self.tabData.setObjectName("tabData")
-
         self.layoutData = QtWidgets.QGridLayout(self.tabData)
         self.layoutData.setObjectName("layoutData")
-
         self.tableView = QtWidgets.QTableView(self.tabData)
         self.tableView.setObjectName("tableView")
         self.tableView.setFont(font)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        # self.tableView.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        # header = self.tableView.horizontalHeader()
-        # header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        # header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
-        # header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
-
         self.layoutData.addWidget(self.tableView, 0, 0, 1, 1)
-
         self.tabWidget.addTab(self.tabData, "")
+
+        self.tabNetflow = QtWidgets.QWidget()
+        self.tabNetflow.setObjectName("tabNetflow")
+        self.layoutNetflow = QtWidgets.QGridLayout(self.tabNetflow)
+        self.layoutNetflow.setObjectName("layoutNetflow")
+
+        self.netflowYearLabel = QtWidgets.QLabel(self.tabNetflow)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.netflowYearLabel.sizePolicy().hasHeightForWidth())
+        self.netflowYearLabel.setSizePolicy(sizePolicy)
+        # self.netflowYearLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.netflowYearLabel.setObjectName("netflowYearLabel")
+        self.netflowYearLabel.setFont(font)
+        self.layoutNetflow.addWidget(self.netflowYearLabel, 0, 0, 1, 1)
+
+        self.netflowYearComboBox = QtWidgets.QComboBox(self.tabNetflow)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(2)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.netflowYearComboBox.sizePolicy().hasHeightForWidth())
+        self.netflowYearComboBox.setSizePolicy(sizePolicy)
+        self.netflowYearComboBox.setObjectName("netflowYearComboBox")
+        self.netflowYearComboBox.setFont(font)
+        self.layoutNetflow.addWidget(self.netflowYearComboBox, 0, 1, 1, 1)
+        self.netflowYearComboBox.currentIndexChanged.connect(self.update_yearly_netflow)
+
+        self.netflowPlot = MplCanvas(self.tabNetflow)
+        self.netflowPlot.setObjectName("netflowPlot")
+        self.layoutNetflow.addWidget(self.netflowPlot, 1, 0, 1, 2)
+
+        self.tabWidget.addTab(self.tabNetflow, "")
+
         self.tabWidget.setTabEnabled(1, False)
+        self.tabWidget.setTabEnabled(2, False)
 
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
@@ -146,14 +195,14 @@ class Ui_MainWindow:
         icon3.addPixmap(QtGui.QPixmap("gui_assets/light_mode.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionLight_Mode.setIcon(icon3)
         self.actionLight_Mode.setObjectName("actionLight_Mode")
-        self.actionLight_Mode.triggered.connect(light_mode)
+        self.actionLight_Mode.triggered.connect(self.light_mode)
 
         self.actionDark_Mode = QtWidgets.QAction(MainWindow)
         icon4 = QtGui.QIcon()
         icon4.addPixmap(QtGui.QPixmap("gui_assets/dark_mode.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionDark_Mode.setIcon(icon4)
         self.actionDark_Mode.setObjectName("actionDark_Mode")
-        self.actionDark_Mode.triggered.connect(dark_mode)
+        self.actionDark_Mode.triggered.connect(self.dark_mode)
 
         self.actionAbout = QtWidgets.QAction(MainWindow)
         icon2 = QtGui.QIcon()
@@ -169,7 +218,6 @@ class Ui_MainWindow:
         self.menubar.addAction(self.menuView.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
-
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -184,6 +232,8 @@ class Ui_MainWindow:
         self.ButtonTerminate.setText(_translate("MainWindow", "Terminate the connection"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabAccount), _translate("MainWindow", "Account"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabData), _translate("MainWindow", "Data"))
+        self.netflowYearLabel.setText(_translate("MainWindow", "Year: "))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNetflow), _translate("MainWindow", "Netflow"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuView.setTitle(_translate("MainWindow", "View"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
@@ -193,37 +243,57 @@ class Ui_MainWindow:
         self.actionLight_Mode.setText(_translate("MainWindow", "Light Mode"))
         self.actionDark_Mode.setText(_translate("MainWindow", "Dark Mode"))
 
+    def light_mode(self):
+        global APP
+        with open("./gui_assets/Breeze/light/stylesheet.qss", "r") as f:
+            stylesheet = f.read()
+            APP.setStyleSheet(stylesheet)
+
+    def dark_mode(self):
+        global APP
+        with open("./gui_assets/Breeze/dark/stylesheet.qss", "r") as f:
+            stylesheet = f.read()
+            APP.setStyleSheet(stylesheet)
+
     def connect_db(self):
         name = QtWidgets.QFileDialog.getOpenFileName(self.MainWindow, "Open Database", filter="*.db")
         self.db_path = name[0]
         self.db_conn = self.MT.open_db(path=self.db_path)
         self.is_db_connected = True
-        self.update_account()
+        self.update()
 
     def new_db(self):
         name = QtWidgets.QFileDialog.getSaveFileName(self.MainWindow, "New Database", filter="SQLite Database (*.db)")
         self.db_path = name[0]
         self.db_conn = self.MT.open_db(path=self.db_path)
+        self.is_db_connected = True
         self.MT.initialize_database()
-        self.update_account()
+        self.update()
 
     def terminate_connection(self):
         self.db_path = None
+        self.is_db_connected = False
         if self.MT is not None:
             self.MT.close()
-        self.update_account()
+        self.update()
 
-    def update_account(self):
-        if self.db_path is None:
+    def update(self):
+        if not self.is_db_connected:
             self.db_conn = None
             self.labelPath.setText("None")
             self.labelPath.setStyleSheet("color: rgb(214, 39, 40);")
             self.tabWidget.setTabEnabled(1, False)
+            self.tabWidget.setTabEnabled(2, False)
         else:
             self.labelPath.setText(self.db_path)
             self.labelPath.setStyleSheet("color: rgb(31, 119, 180);")
             self.tabWidget.setTabEnabled(1, True)
+            self.tabWidget.setTabEnabled(2, True)
             self.populate_data_table()
+            years = self.MT.get_years()
+            self.netflowYearComboBox.clear() # FIXME: triggers update netflow :(
+            self.netflowYearComboBox.addItems(years)
+            self.update_plots()
 
     def populate_data_table(self):
         df = self.MT.get_transactions_df_custom("""
@@ -232,6 +302,16 @@ class Ui_MainWindow:
         """)
         model = PandasModel(df)
         self.tableView.setModel(model)
+
+    def update_plots(self):
+        self.update_yearly_netflow()
+
+    def update_yearly_netflow(self):
+        year = int(self.netflowYearComboBox.currentText())
+        self.netflowPlot.axes.cla()
+        ax = self.netflowPlot.axes
+        plot_nerworth(ax, self.MT, 2021)
+        self.netflowPlot.draw()
 
     def closeEvent(self, event):
         self.terminate_connection()
@@ -251,29 +331,11 @@ class MainWindowCustom(QtWidgets.QMainWindow):
             event.ignore()
 
 
-def dark_mode():
-    global APP
-    with open("./gui_assets/Breeze/dark/stylesheet.qss", "r") as f:
-        stylesheet = f.read()
-        APP.setStyleSheet(stylesheet)
-
-def light_mode():
-    global APP
-    with open("./gui_assets/Breeze/light/stylesheet.qss", "r") as f:
-        stylesheet = f.read()
-        APP.setStyleSheet(stylesheet)
 
 if __name__ == "__main__":
     import sys
     APP = QtWidgets.QApplication(sys.argv)
     MainWindow = MainWindowCustom()
-
-    from detect_system_theme import detect
-    if detect() ==  "Dark":
-        dark_mode()
-    else:
-        light_mode()
-
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()

@@ -33,7 +33,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabAccount">
        <attribute name="title">
@@ -118,6 +118,42 @@
        <layout class="QGridLayout" name="layoutData">
         <item row="0" column="0">
          <widget class="QTableView" name="tableView"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabNetflow">
+       <attribute name="title">
+        <string>Netflow</string>
+       </attribute>
+       <layout class="QGridLayout" name="layoutNetflow">
+        <item row="0" column="0">
+         <widget class="QLabel" name="netflowYearLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Year: </string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="netflowYearComboBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>2</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QWidget" name="netflowPlot" native="true"/>
         </item>
        </layout>
       </widget>
